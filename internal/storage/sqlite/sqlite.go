@@ -106,6 +106,26 @@ func (s *Storage) Migrate(ctx context.Context) error {
 			data BLOB NOT NULL,
 			created_at TEXT NOT NULL
 		)`,
+		`CREATE TABLE IF NOT EXISTS branches (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			provider TEXT NOT NULL,
+			owner TEXT NOT NULL,
+			repo_name TEXT NOT NULL,
+			name TEXT NOT NULL,
+			protected INTEGER DEFAULT 0,
+			is_default INTEGER DEFAULT 0,
+			sha TEXT,
+			UNIQUE(provider, owner, repo_name, name)
+		)`,
+		`CREATE TABLE IF NOT EXISTS contributors (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			provider TEXT NOT NULL,
+			owner TEXT NOT NULL,
+			repo_name TEXT NOT NULL,
+			username TEXT NOT NULL,
+			contributions INTEGER DEFAULT 0,
+			UNIQUE(provider, owner, repo_name, username)
+		)`,
 	}
 	for _, stmt := range stmts {
 		if _, err := s.db.ExecContext(ctx, stmt); err != nil {
@@ -343,6 +363,113 @@ func (s *Storage) SaveRawResponse(ctx context.Context, prov, endpoint string, da
 		prov, endpoint, data, time.Now().UTC().Format(time.RFC3339),
 	)
 	return err
+}
+
+// SaveBranches persists branches for a repository.
+func (s *Storage) SaveBranches(ctx context.Context, ref domain.RepositoryRef, branches []domain.Branch) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer rollbackTx(tx)
+
+	stmt, err := tx.PrepareContext(ctx, `
+		INSERT OR REPLACE INTO branches
+			(provider, owner, repo_name, name, protected, is_default, sha)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, b := range branches {
+		if _, err := stmt.ExecContext(ctx,
+			ref.Provider, ref.Owner, ref.Name,
+			b.Name, boolToInt(b.Protected), boolToInt(b.Default), b.SHA,
+		); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+// GetBranches retrieves branches for a repository.
+func (s *Storage) GetBranches(ctx context.Context, ref domain.RepositoryRef) ([]domain.Branch, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT name, protected, is_default, sha
+		FROM branches WHERE provider = ? AND owner = ? AND repo_name = ?
+		ORDER BY name`,
+		ref.Provider, ref.Owner, ref.Name,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var branches []domain.Branch
+	for rows.Next() {
+		var b domain.Branch
+		var protected, isDefault int
+		if err := rows.Scan(&b.Name, &protected, &isDefault, &b.SHA); err != nil {
+			return nil, err
+		}
+		b.Protected = protected == 1
+		b.Default = isDefault == 1
+		branches = append(branches, b)
+	}
+	return branches, rows.Err()
+}
+
+// SaveContributors persists contributors for a repository.
+func (s *Storage) SaveContributors(ctx context.Context, ref domain.RepositoryRef, contribs []domain.Contributor) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer rollbackTx(tx)
+
+	stmt, err := tx.PrepareContext(ctx, `
+		INSERT OR REPLACE INTO contributors
+			(provider, owner, repo_name, username, contributions)
+		VALUES (?, ?, ?, ?, ?)`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, c := range contribs {
+		if _, err := stmt.ExecContext(ctx,
+			ref.Provider, ref.Owner, ref.Name,
+			c.Username, c.Contributions,
+		); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+// GetContributors retrieves contributors for a repository.
+func (s *Storage) GetContributors(ctx context.Context, ref domain.RepositoryRef) ([]domain.Contributor, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT username, contributions
+		FROM contributors WHERE provider = ? AND owner = ? AND repo_name = ?
+		ORDER BY contributions DESC`,
+		ref.Provider, ref.Owner, ref.Name,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var contribs []domain.Contributor
+	for rows.Next() {
+		var c domain.Contributor
+		if err := rows.Scan(&c.Username, &c.Contributions); err != nil {
+			return nil, err
+		}
+		contribs = append(contribs, c)
+	}
+	return contribs, rows.Err()
 }
 
 func rollbackTx(tx *sql.Tx) {

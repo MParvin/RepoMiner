@@ -20,6 +20,8 @@ type RepositoryProvider interface {
 	GetCommits(ctx context.Context, ref domain.RepositoryRef, opts domain.CommitListOptions) ([]domain.Commit, error)
 	GetIssues(ctx context.Context, ref domain.RepositoryRef, opts domain.ListOptions) ([]domain.Issue, error)
 	GetPullRequests(ctx context.Context, ref domain.RepositoryRef, opts domain.ListOptions) ([]domain.PullRequest, error)
+	GetBranches(ctx context.Context, ref domain.RepositoryRef) ([]domain.Branch, error)
+	GetContributors(ctx context.Context, ref domain.RepositoryRef) ([]domain.Contributor, error)
 	CloneRepository(ctx context.Context, ref domain.RepositoryRef, opts domain.CloneOptions) (string, error)
 }
 

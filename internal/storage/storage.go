@@ -24,5 +24,11 @@ type Storage interface {
 	SaveIssues(ctx context.Context, ref domain.RepositoryRef, issues []domain.Issue) error
 	GetIssues(ctx context.Context, ref domain.RepositoryRef) ([]domain.Issue, error)
 
+	SaveBranches(ctx context.Context, ref domain.RepositoryRef, branches []domain.Branch) error
+	GetBranches(ctx context.Context, ref domain.RepositoryRef) ([]domain.Branch, error)
+
+	SaveContributors(ctx context.Context, ref domain.RepositoryRef, contributors []domain.Contributor) error
+	GetContributors(ctx context.Context, ref domain.RepositoryRef) ([]domain.Contributor, error)
+
 	SaveRawResponse(ctx context.Context, provider, endpoint string, data []byte) error
 }

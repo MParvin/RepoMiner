@@ -11,7 +11,7 @@ func init() {
 	provider.Register("gitea", New)
 }
 
-// Provider is a stub Gitea repository provider (Phase 1).
+// Provider is a stub Gitea repository provider (Phase 1+).
 type Provider struct {
 	url   string
 	token string
@@ -36,6 +36,14 @@ func (p *Provider) GetRepository(_ context.Context, _ domain.RepositoryRef) (*do
 }
 
 func (p *Provider) GetCommits(_ context.Context, _ domain.RepositoryRef, _ domain.CommitListOptions) ([]domain.Commit, error) {
+	return nil, provider.ErrNotImplemented
+}
+
+func (p *Provider) GetBranches(_ context.Context, _ domain.RepositoryRef) ([]domain.Branch, error) {
+	return nil, provider.ErrNotImplemented
+}
+
+func (p *Provider) GetContributors(_ context.Context, _ domain.RepositoryRef) ([]domain.Contributor, error) {
 	return nil, provider.ErrNotImplemented
 }
 

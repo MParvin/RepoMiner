@@ -6,20 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/mparvin/repo-miner/internal/analyzer"
-	"github.com/mparvin/repo-miner/internal/core/provider"
 )
-
-var collectCmd = &cobra.Command{
-	Use:   "collect",
-	Short: "Collect repository data from the configured provider",
-	RunE: func(_ *cobra.Command, _ []string) error {
-		cfg := loadConfigOrExit()
-		if _, err := provider.Get(cfg.Source.Type, cfg.ProviderConfig()); err != nil {
-			return fmt.Errorf("provider %q: %w", cfg.Source.Type, err)
-		}
-		return fmt.Errorf("collect not implemented (Phase 1)")
-	},
-}
 
 var analyzeCmd = &cobra.Command{
 	Use:   "analyze [path]",
@@ -57,7 +44,6 @@ var rankCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(collectCmd)
 	rootCmd.AddCommand(analyzeCmd)
 	rootCmd.AddCommand(generateCmd)
 	rootCmd.AddCommand(rankCmd)

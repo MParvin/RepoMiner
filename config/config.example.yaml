@@ -1,0 +1,21 @@
+# RepoMiner Dataset Builder Configuration
+
+source:
+  type: github          # github | gitlab | gitea | localgit
+  url: https://api.github.com
+  token: ""             # API token for authenticated requests
+
+analyzer:
+  language: golang      # golang | python | rust (selects analyzer plugin)
+
+storage:
+  driver: sqlite
+  path: data/dataset-builder.db
+
+workspace:
+  data_dir: data
+  datasets_dir: datasets
+  repos_dir: repos
+
+queue:
+  driver: memory

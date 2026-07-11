@@ -1,0 +1,21 @@
+# Build artifacts
+dataset-builder
+bin/
+
+# Workspace data
+data/
+datasets/
+repos/
+config.yaml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Temp
+tmp/
+test

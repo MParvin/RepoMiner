@@ -32,3 +32,9 @@ ranking:
     docs: 10
     activity: 15
     maintainers: 10
+
+llm:
+  type: ollama
+  base_url: http://localhost:11434
+  model: mparvin/Supra-50M-f16:latest
+  threshold: 6.0

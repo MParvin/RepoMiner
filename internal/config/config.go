@@ -20,6 +20,7 @@ type Config struct {
 	Workspace WorkspaceConfig `mapstructure:"workspace"`
 	Queue     QueueConfig     `mapstructure:"queue"`
 	Ranking   RankingConfig   `mapstructure:"ranking"`
+	LLM       LLMConfig       `mapstructure:"llm"`
 }
 
 // SourceConfig configures the repository provider.
@@ -77,6 +78,15 @@ func DefaultRankingWeights() RankingWeights {
 		AgentsMD: 30, ClaudeMD: 25, CursorDir: 15, AICommits: 10,
 		Tests: 20, CI: 15, README: 10, Docs: 10, Activity: 15, Maintainers: 10,
 	}
+}
+
+// LLMConfig configures the LLM provider for dataset refinement.
+type LLMConfig struct {
+	Type      string  `mapstructure:"type"`
+	BaseURL   string  `mapstructure:"base_url"`
+	Model     string  `mapstructure:"model"`
+	APIKey    string  `mapstructure:"api_key"`
+	Threshold float64 `mapstructure:"threshold"`
 }
 
 // ProviderConfig returns provider settings as a map for the registry.

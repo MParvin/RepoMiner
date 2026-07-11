@@ -98,12 +98,18 @@ type CloneOptions struct {
 
 // AnalysisResult holds the output of a language analyzer.
 type AnalysisResult struct {
-	Language        string  `json:"language"`
-	Packages        int     `json:"packages"`
-	Functions       int     `json:"functions"`
-	Interfaces      int     `json:"interfaces"`
-	HasTests        bool    `json:"tests"`
-	ComplexityScore float64 `json:"complexity_score"`
+	Language              string   `json:"language"`
+	Packages              int      `json:"packages"`
+	Functions             int      `json:"functions"`
+	Structs               int      `json:"structs"`
+	Interfaces            int      `json:"interfaces"`
+	Dependencies          []string `json:"dependencies,omitempty"`
+	TestFiles             int      `json:"test_files"`
+	DocumentedFunctions   int      `json:"documented_functions"`
+	HasTests              bool     `json:"tests"`
+	TestCoverageSignal    float64  `json:"test_coverage_signal"`
+	StructureQualityScore float64  `json:"structure_quality_score"`
+	ComplexityScore       float64  `json:"complexity_score"`
 }
 
 // DatasetSample represents a single training example.

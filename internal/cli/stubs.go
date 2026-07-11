@@ -8,21 +8,6 @@ import (
 	"github.com/mparvin/repo-miner/internal/analyzer"
 )
 
-var analyzeCmd = &cobra.Command{
-	Use:   "analyze [path]",
-	Short: "Analyze source code at the given path",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(_ *cobra.Command, args []string) error {
-		cfg := loadConfigOrExit()
-		ana, err := analyzer.Get(cfg.Analyzer.Language, cfg.AnalyzerConfigMap())
-		if err != nil {
-			return fmt.Errorf("analyzer %q: %w", cfg.Analyzer.Language, err)
-		}
-		fmt.Printf("Using analyzer: %s\n", ana.Name())
-		return fmt.Errorf("analyze not implemented (Phase 2)")
-	},
-}
-
 var generateCmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate dataset samples from collected data",
@@ -44,7 +29,6 @@ var rankCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(analyzeCmd)
 	rootCmd.AddCommand(generateCmd)
 	rootCmd.AddCommand(rankCmd)
 }

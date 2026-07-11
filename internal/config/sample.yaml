@@ -19,3 +19,16 @@ workspace:
 
 queue:
   driver: memory
+
+ranking:
+  weights:
+    agents_md: 30
+    claude_md: 25
+    cursor_dir: 15
+    ai_commits: 10
+    tests: 20
+    ci: 15
+    readme: 10
+    docs: 10
+    activity: 15
+    maintainers: 10

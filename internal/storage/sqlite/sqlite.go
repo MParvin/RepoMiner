@@ -178,6 +178,26 @@ func (s *Storage) GetRepository(ctx context.Context, ref domain.RepositoryRef) (
 	return repo, nil
 }
 
+// ListRepositories returns all stored repository references.
+func (s *Storage) ListRepositories(ctx context.Context) ([]domain.RepositoryRef, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT provider, owner, name, full_name FROM repositories ORDER BY stars DESC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var refs []domain.RepositoryRef
+	for rows.Next() {
+		var ref domain.RepositoryRef
+		if err := rows.Scan(&ref.Provider, &ref.Owner, &ref.Name, &ref.FullName); err != nil {
+			return nil, err
+		}
+		refs = append(refs, ref)
+	}
+	return refs, rows.Err()
+}
+
 // SaveCommits persists commits for a repository.
 func (s *Storage) SaveCommits(ctx context.Context, ref domain.RepositoryRef, commits []domain.Commit) error {
 	tx, err := s.db.BeginTx(ctx, nil)

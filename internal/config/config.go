@@ -19,6 +19,7 @@ type Config struct {
 	Storage   StorageConfig   `mapstructure:"storage"`
 	Workspace WorkspaceConfig `mapstructure:"workspace"`
 	Queue     QueueConfig     `mapstructure:"queue"`
+	Ranking   RankingConfig   `mapstructure:"ranking"`
 }
 
 // SourceConfig configures the repository provider.
@@ -49,6 +50,33 @@ type WorkspaceConfig struct {
 // QueueConfig configures the job queue.
 type QueueConfig struct {
 	Driver string `mapstructure:"driver"`
+}
+
+// RankingConfig configures repository ranking weights.
+type RankingConfig struct {
+	Weights RankingWeights `mapstructure:"weights"`
+}
+
+// RankingWeights holds configurable score weights.
+type RankingWeights struct {
+	AgentsMD    int `mapstructure:"agents_md"`
+	ClaudeMD    int `mapstructure:"claude_md"`
+	CursorDir   int `mapstructure:"cursor_dir"`
+	AICommits   int `mapstructure:"ai_commits"`
+	Tests       int `mapstructure:"tests"`
+	CI          int `mapstructure:"ci"`
+	README      int `mapstructure:"readme"`
+	Docs        int `mapstructure:"docs"`
+	Activity    int `mapstructure:"activity"`
+	Maintainers int `mapstructure:"maintainers"`
+}
+
+// DefaultRankingWeights returns sensible default weights.
+func DefaultRankingWeights() RankingWeights {
+	return RankingWeights{
+		AgentsMD: 30, ClaudeMD: 25, CursorDir: 15, AICommits: 10,
+		Tests: 20, CI: 15, README: 10, Docs: 10, Activity: 15, Maintainers: 10,
+	}
 }
 
 // ProviderConfig returns provider settings as a map for the registry.

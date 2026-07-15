@@ -25,6 +25,11 @@ type RepositoryProvider interface {
 	CloneRepository(ctx context.Context, ref domain.RepositoryRef, opts domain.CloneOptions) (string, error)
 }
 
+// Searcher is implemented by providers that support repository search.
+type Searcher interface {
+	SearchRepositories(ctx context.Context, opts domain.SearchOptions) ([]domain.Repository, error)
+}
+
 // Factory creates a RepositoryProvider from configuration.
 type Factory func(cfg map[string]string) (RepositoryProvider, error)
 

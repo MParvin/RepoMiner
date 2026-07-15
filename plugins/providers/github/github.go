@@ -79,6 +79,98 @@ func (p *Provider) ListRepositories(ctx context.Context, opts domain.ListOptions
 	return result, nil
 }
 
+// SearchRepositories searches GitHub repositories via the Search API.
+func (p *Provider) SearchRepositories(ctx context.Context, opts domain.SearchOptions) ([]domain.Repository, error) {
+	q := buildGitHubQuery(opts)
+	if q == "" {
+		return nil, fmt.Errorf("empty search query")
+	}
+
+	perPage := opts.PerPage
+	if perPage == 0 {
+		perPage = 30
+	}
+	if perPage > 100 {
+		perPage = 100
+	}
+	page := opts.Page
+	if page == 0 {
+		page = 1
+	}
+
+	sort := opts.Sort
+	if sort == "" {
+		sort = "stars"
+	}
+	order := opts.Order
+	if order == "" {
+		order = "desc"
+	}
+
+	path := fmt.Sprintf("/search/repositories?q=%s&per_page=%d&page=%d&sort=%s&order=%s",
+		url.QueryEscape(q), perPage, page, sort, order)
+	data, err := p.client.Get(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp struct {
+		TotalCount int      `json:"total_count"`
+		Items      []ghRepo `json:"items"`
+	}
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, err
+	}
+
+	result := make([]domain.Repository, 0, len(resp.Items))
+	for _, r := range resp.Items {
+		result = append(result, mapRepo(r))
+	}
+	return result, nil
+}
+
+func buildGitHubQuery(opts domain.SearchOptions) string {
+	// Re-use collector query builder logic inline to avoid import cycle
+	if q := strings.TrimSpace(opts.Query); q != "" {
+		return q
+	}
+	var parts []string
+	if kw := strings.TrimSpace(opts.Keywords); kw != "" {
+		parts = append(parts, kw)
+	}
+	if opts.User != "" {
+		parts = append(parts, "user:"+opts.User)
+	}
+	if opts.Org != "" {
+		parts = append(parts, "org:"+opts.Org)
+	}
+	if opts.Language != "" {
+		parts = append(parts, "language:"+opts.Language)
+	}
+	if opts.CreatedAfter != "" {
+		parts = append(parts, "created:>"+opts.CreatedAfter)
+	}
+	if opts.CreatedBefore != "" {
+		parts = append(parts, "created:<"+opts.CreatedBefore)
+	}
+	if opts.MinStars > 0 {
+		parts = append(parts, fmt.Sprintf("stars:>=%d", opts.MinStars))
+	}
+	if opts.MaxStars > 0 {
+		parts = append(parts, fmt.Sprintf("stars:<=%d", opts.MaxStars))
+	}
+	if opts.Topic != "" {
+		parts = append(parts, "topic:"+opts.Topic)
+	}
+	if opts.Forks != nil {
+		parts = append(parts, fmt.Sprintf("fork:%t", *opts.Forks))
+	}
+	if opts.Archived != nil {
+		parts = append(parts, fmt.Sprintf("archived:%t", *opts.Archived))
+	}
+	return strings.Join(parts, " ")
+}
+
 func (p *Provider) GetRepository(ctx context.Context, ref domain.RepositoryRef) (*domain.Repository, error) {
 	path := fmt.Sprintf("/repos/%s/%s", ref.Owner, ref.Name)
 	data, err := p.client.Get(ctx, path)

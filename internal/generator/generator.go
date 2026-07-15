@@ -64,9 +64,7 @@ func (g *Generator) Generate(ctx context.Context, ref domain.RepositoryRef, outp
 
 	switch format {
 	case "huggingface", "hf":
-		dir := outputPath
-		name := ref.Name
-		if err := export.WriteHuggingFace(dir, name, all); err != nil {
+		if err := export.WriteHuggingFaceInPlace(outputPath, all); err != nil {
 			return 0, err
 		}
 	default:

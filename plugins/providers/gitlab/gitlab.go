@@ -83,6 +83,39 @@ func (p *Provider) ListRepositories(ctx context.Context, opts domain.ListOptions
 	return result, nil
 }
 
+// SearchRepositories searches GitLab projects.
+func (p *Provider) SearchRepositories(ctx context.Context, opts domain.SearchOptions) ([]domain.Repository, error) {
+	q := strings.TrimSpace(opts.Query)
+	if q == "" {
+		q = strings.TrimSpace(opts.Keywords)
+	}
+	if q == "" && opts.Language != "" {
+		q = opts.Language
+	}
+	if q == "" {
+		return nil, fmt.Errorf("empty search query")
+	}
+
+	perPage := opts.PerPage
+	if perPage == 0 {
+		perPage = 30
+	}
+	path := fmt.Sprintf("/projects?search=%s&per_page=%d", url.QueryEscape(q), perPage)
+	data, err := p.client.Get(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+	var projects []glProject
+	if err := json.Unmarshal(data, &projects); err != nil {
+		return nil, err
+	}
+	result := make([]domain.Repository, 0, len(projects))
+	for _, pr := range projects {
+		result = append(result, mapProject(pr))
+	}
+	return result, nil
+}
+
 func (p *Provider) GetRepository(ctx context.Context, ref domain.RepositoryRef) (*domain.Repository, error) {
 	path := fmt.Sprintf("/projects/%s", p.projectID(ref))
 	data, err := p.client.Get(ctx, path)

@@ -82,6 +82,25 @@ type ListOptions struct {
 	PerPage int `json:"per_page,omitempty"`
 }
 
+// SearchOptions controls repository search (GitHub/GitLab advanced search).
+type SearchOptions struct {
+	ListOptions
+	Query         string `json:"query,omitempty"`           // raw search query (overrides composed)
+	Keywords      string `json:"keywords,omitempty"`        // free-text terms, e.g. "gin"
+	Language      string `json:"language,omitempty"`        // e.g. Go, Python
+	CreatedAfter  string `json:"created_after,omitempty"`  // YYYY-MM-DD
+	CreatedBefore string `json:"created_before,omitempty"` // YYYY-MM-DD
+	MinStars      int    `json:"min_stars,omitempty"`
+	MaxStars      int    `json:"max_stars,omitempty"`
+	Topic         string `json:"topic,omitempty"`
+	User          string `json:"user,omitempty"`
+	Org           string `json:"org,omitempty"`
+	Forks         *bool  `json:"forks,omitempty"`
+	Archived      *bool  `json:"archived,omitempty"`
+	Sort          string `json:"sort,omitempty"` // stars, updated, forks
+	Order         string `json:"order,omitempty"` // desc, asc
+}
+
 // CommitListOptions controls commit listing.
 type CommitListOptions struct {
 	ListOptions

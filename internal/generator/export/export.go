@@ -36,19 +36,23 @@ type HuggingFaceMeta struct {
 	Splits      map[string]int    `json:"splits"`
 }
 
-// WriteHuggingFace writes samples in HuggingFace-compatible layout.
+// WriteHuggingFace writes samples in HuggingFace-compatible layout under dir/name/.
 func WriteHuggingFace(dir string, name string, samples []domain.DatasetSample) error {
-	dataDir := filepath.Join(dir, name)
-	if err := os.MkdirAll(dataDir, 0o755); err != nil {
+	return WriteHuggingFaceInPlace(filepath.Join(dir, name), samples)
+}
+
+// WriteHuggingFaceInPlace writes train.jsonl and dataset_info.json directly in dir.
+func WriteHuggingFaceInPlace(dir string, samples []domain.DatasetSample) error {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
 
-	if err := WriteJSONL(filepath.Join(dataDir, "train.jsonl"), samples); err != nil {
+	if err := WriteJSONL(filepath.Join(dir, "train.jsonl"), samples); err != nil {
 		return err
 	}
 
 	meta := HuggingFaceMeta{
-		Description: fmt.Sprintf("Software engineering dataset for %s", name),
+		Description: fmt.Sprintf("Software engineering dataset (%s)", filepath.Base(dir)),
 		Features: map[string]string{
 			"instruction": "string",
 			"context":     "string",
@@ -61,5 +65,5 @@ func WriteHuggingFace(dir string, name string, samples []domain.DatasetSample) e
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(dataDir, "dataset_info.json"), metaBytes, 0o644)
+	return os.WriteFile(filepath.Join(dir, "dataset_info.json"), metaBytes, 0o644)
 }

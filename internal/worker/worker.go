@@ -13,6 +13,7 @@ import (
 	"github.com/mparvin/repo-miner/internal/core/domain"
 	"github.com/mparvin/repo-miner/internal/core/job"
 	"github.com/mparvin/repo-miner/internal/core/queue"
+	"github.com/mparvin/repo-miner/internal/dataset"
 	"github.com/mparvin/repo-miner/internal/generator"
 	"github.com/mparvin/repo-miner/internal/storage/sqlite"
 )
@@ -130,8 +131,10 @@ func (r *Runner) handleGenerate(ctx context.Context, j domain.Job) error {
 		return err
 	}
 	output := j.Payload["output"]
+	name := dataset.ResolveName(j.Payload["name"], j.Payload["keywords"])
 	if output == "" {
-		output = r.Config.Workspace.DatasetsDir + "/" + ref.Name + ".jsonl"
+		paths := dataset.NewPaths(r.Config.Workspace.DatasetsDir, name)
+		output = paths.JSONL
 	}
 	count, err := gen.Generate(ctx, ref, output, "jsonl")
 	if err != nil {

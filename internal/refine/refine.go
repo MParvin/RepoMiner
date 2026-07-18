@@ -62,7 +62,7 @@ func NewPipeline(provider llm.Provider, threshold float64) *Pipeline {
 }
 
 // Refine processes a JSONL dataset file and produces a refined version.
-func (p *Pipeline) Refine(ctx context.Context, inputPath, outputPath string, limit int) (*Report, error) {
+func (p *Pipeline) Refine(ctx context.Context, inputPath, outputPath, reportPath, manifestPath string, limit int) (*Report, error) {
 	samples, err := readJSONL(inputPath)
 	if err != nil {
 		return nil, err
@@ -76,6 +76,16 @@ func (p *Pipeline) Refine(ctx context.Context, inputPath, outputPath string, lim
 		ext := filepath.Ext(inputPath)
 		base := strings.TrimSuffix(inputPath, ext)
 		outputPath = base + "-" + version + ext
+	}
+	if reportPath == "" {
+		reportPath = strings.TrimSuffix(outputPath, filepath.Ext(outputPath)) + "-report.json"
+	}
+	if manifestPath == "" {
+		manifestPath = filepath.Join(filepath.Dir(outputPath), "manifest.json")
+	}
+
+	if err := os.MkdirAll(filepath.Dir(outputPath), 0o755); err != nil {
+		return nil, err
 	}
 
 	report := &Report{
@@ -119,24 +129,23 @@ func (p *Pipeline) Refine(ctx context.Context, inputPath, outputPath string, lim
 		return nil, err
 	}
 
-	reportPath := strings.TrimSuffix(outputPath, filepath.Ext(outputPath)) + "-report.json"
 	reportBytes, _ := json.MarshalIndent(report, "", "  ")
 	if err := os.WriteFile(reportPath, reportBytes, 0o644); err != nil {
 		return nil, err
 	}
 
-	// Write version manifest
-	manifestPath := filepath.Join(filepath.Dir(outputPath), "manifest.json")
 	manifest := map[string]string{
-		"input":    inputPath,
-		"output":   outputPath,
-		"report":   reportPath,
-		"version":  version,
-		"model":    p.LLM.Name(),
+		"input":      inputPath,
+		"output":     outputPath,
+		"report":     reportPath,
+		"version":    version,
+		"model":      p.LLM.Name(),
 		"refined_at": time.Now().UTC().Format(time.RFC3339),
 	}
 	manifestBytes, _ := json.MarshalIndent(manifest, "", "  ")
-	_ = os.WriteFile(manifestPath, manifestBytes, 0o644)
+	if err := os.WriteFile(manifestPath, manifestBytes, 0o644); err != nil {
+		return nil, err
+	}
 
 	return report, nil
 }
